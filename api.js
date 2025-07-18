@@ -1,4 +1,4 @@
-const baseURL = 'http://localhost:8000';
+const baseURL = 'https://getedubackend.onrender.com';
 
 async function login() {
   const email = document.getElementById('email').value;
