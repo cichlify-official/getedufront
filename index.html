@@ -2,39 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GetEdu - Evaluate & Improve</title>
-  <script defer src="scripts.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GetEdu MVP</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
-  <div class="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-    <h1 class="text-4xl font-bold mb-6">🎯 GetEdu - Smart IELTS Evaluator</h1>
-    
-    <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-lg">
-      <label class="block text-lg font-semibold mb-2">📝 Write Your Essay</label>
-      <textarea id="essayInput" rows="6" class="w-full p-3 border rounded mb-4" placeholder="Type your IELTS essay..."></textarea>
-      <button onclick="submitEssay()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 mb-6">Evaluate Essay</button>
+<body>
+  <header>
+    <img src="assets/logo.svg" alt="GetEdu Logo" class="logo" />
+    <h1>GetEdu - Learn by Speaking, Writing, and Watching</h1>
+  </header>
 
-      <label class="block text-lg font-semibold mb-2">🎤 Record Your Speaking</label>
-      <div class="flex gap-2 mb-4">
-        <button onclick="startRecording()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Start</button>
-        <button onclick="stopRecording()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Stop</button>
-      </div>
-      <button onclick="submitAudio()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 mb-6">Evaluate Speaking</button>
+  <main>
+    <section id="auth-section">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </section>
 
-      <div id="results" class="hidden">
-        <h2 class="text-xl font-semibold mb-2">📊 Your Results</h2>
-        <p><strong>Strengths:</strong> <span id="strengths"></span></p>
-        <p><strong>Weaknesses:</strong> <span id="weaknesses"></span></p>
-        <button onclick="getCourse()" class="w-full mt-4 bg-purple-600 text-white py-2 rounded hover:bg-purple-700">📚 Get a Personalized Course</button>
-      </div>
+    <section id="record-section">
+      <h2>Start Speaking</h2>
+      <video id="videoPreview" autoplay muted></video>
+      <button onclick="startRecording()">🎙️ Start Recording</button>
+      <button onclick="stopRecording()">⏹️ Stop</button>
+    </section>
 
-      <div id="course" class="hidden mt-6">
-        <h2 class="text-xl font-semibold mb-2">🧠 Your Personalized Course</h2>
-        <ul id="courseContent" class="list-disc pl-5"></ul>
-      </div>
-    </div>
-  </div>
+    <section id="write-section">
+      <h2>Writing Task</h2>
+      <textarea id="writingTask" placeholder="Write your thoughts..."></textarea>
+      <button onclick="submitWriting()">Submit</button>
+    </section>
+  </main>
+
+  <script src="api.js"></script>
+  <script src="recorder.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
