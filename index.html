@@ -1,35 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GetEdu MVP</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>GetEdu - Cichlify MVP</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
+  <!-- Header & Navigation -->
   <header>
-    <img src="assets/logo.svg" alt="GetEdu Logo" class="logo" />
-    <h1>GetEdu - Learn by Speaking, Writing, and Watching</h1>
+    <h1>GetEdu</h1>
+    <nav>
+      <button data-tab="writing" class="active">Writing</button>
+      <button data-tab="reading">Reading</button>
+      <button data-tab="speaking">Speaking</button>
+      <button data-tab="listening">Listening</button>
+    </nav>
   </header>
 
-  <main>
-    <section id="auth-section">
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
+  <main id="tabs">
+    <!-- Writing Tab -->
+    <section id="writing" class="tab active">
+      <h2>✍️ Writing Task</h2>
+      <textarea id="writingInput" placeholder="Write your essay here..."></textarea>
+      <button onclick="submitWriting()">Evaluate Writing</button>
+      <div id="writingResults" class="results hidden"></div>
     </section>
 
-    <section id="record-section">
-      <h2>Start Speaking</h2>
+    <!-- Reading Tab -->
+    <section id="reading" class="tab">
+      <h2>📚 Reading Task</h2>
+      <p id="readingPassage">[Passage will appear here]</p>
+      <button onclick="loadReading()">Load Passage</button>
+      <textarea id="readingAnswer" placeholder="Your summary/response..."></textarea>
+      <button onclick="submitReading()">Evaluate Reading</button>
+      <div id="readingResults" class="results hidden"></div>
+    </section>
+
+    <!-- Speaking Tab -->
+    <section id="speaking" class="tab">
+      <h2>🎤 Speaking Task</h2>
+      <p id="speakingPrompt">[Prompt will appear here]</p>
       <video id="videoPreview" autoplay muted></video>
-      <button onclick="startRecording()">🎙️ Start Recording</button>
-      <button onclick="stopRecording()">⏹️ Stop</button>
+      <button onclick="startRecording()">Start</button>
+      <button onclick="stopRecording()">Stop</button>
+      <button onclick="submitSpeaking()">Evaluate Speaking</button>
+      <div id="speakingResults" class="results hidden"></div>
     </section>
 
-    <section id="write-section">
-      <h2>Writing Task</h2>
-      <textarea id="writingTask" placeholder="Write your thoughts..."></textarea>
-      <button onclick="submitWriting()">Submit</button>
+    <!-- Listening Tab -->
+    <section id="listening" class="tab">
+      <h2>🎧 Listening Task</h2>
+      <audio id="listeningAudio" controls></audio>
+      <button onclick="loadListening()">Load Audio</button>
+      <textarea id="listeningAnswer" placeholder="Write what you heard..."></textarea>
+      <button onclick="submitListening()">Evaluate Listening</button>
+      <div id="listeningResults" class="results hidden"></div>
     </section>
   </main>
 

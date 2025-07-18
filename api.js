@@ -31,3 +31,30 @@ async function submitWriting() {
   const data = await res.json();
   alert("Submitted: " + data.message);
 }
+const api = {
+  async get(path) {
+    const res = await fetch(`https://getedubackend.onrender.com${path}`);
+    return res.json();
+  },
+  async getBinary(path) {
+    const res = await fetch(`https://getedubackend.onrender.com${path}`);
+    return res.blob();
+  },
+  async post(path, payload) {
+    const res = await fetch(`https://getedubackend.onrender.com${path}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  },
+  async upload(path, key, blob, filename) {
+    const form = new FormData();
+    form.append(key, blob, filename);
+    const res = await fetch(`https://getedubackend.onrender.com${path}`, {
+      method: 'POST',
+      body: form
+    });
+    return res.json();
+  }
+};

@@ -1,44 +1,70 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f9fbfe;
-  color: #1a1a1a;
-  margin: 0;
-  padding: 0;
-  text-align: center;
+  font-family: 'Inter', sans-serif;
+  background: #f5f7fa;
+  color: #444;
+  margin: 0; padding: 0;
 }
 header {
-  background-color: #1098f7;
-  color: white;
-  padding: 20px 0;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.logo {
-  width: 60px;
+header h1 {
+  font-size: 1.8rem;
+}
+nav button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  margin: 0 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+nav button.active {
+  border-bottom: 2px solid #3b82f6;
+  color: #3b82f6;
 }
 main {
   padding: 20px;
 }
-input, textarea {
+.tab { display: none; }
+.tab.active { display: block; }
+textarea {
+  width: 100%;
+  min-height: 120px;
   padding: 10px;
-  margin: 8px;
-  width: 80%;
-  max-width: 400px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
 }
 button {
-  background-color: #3b28cc;
+  display: inline-block;
+  background: #3b82f6;
   color: white;
   border: none;
-  padding: 10px 20px;
-  margin: 10px;
+  padding: 10px 16px;
+  margin: 5px 0;
+  border-radius: 6px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover { background: #2563eb; }
+.results {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 15px;
+  margin-top: 15px;
   border-radius: 6px;
 }
-button:hover {
-  background-color: #282b28;
-}
-video {
+.hidden { display: none; }
+video, audio {
   width: 100%;
   max-width: 500px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: 2px solid #1098f7;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: #000;
 }
