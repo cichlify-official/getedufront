@@ -1,63 +1,242 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GetEdu - Cichlify MVP</title>
+  <title>GetEdu - IELTS Preparation Platform</title>
   <link rel="stylesheet" href="styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
-  <!-- Header & Navigation -->
-  <header>
-    <h1>GetEdu</h1>
-    <nav>
-      <button data-tab="writing" class="active">Writing</button>
-      <button data-tab="reading">Reading</button>
-      <button data-tab="speaking">Speaking</button>
-      <button data-tab="listening">Listening</button>
-    </nav>
-  </header>
+  <!-- Main Application -->
+  <div id="mainApp">
+    <!-- Header & Navigation -->
+    <header>
+      <h1>GetEdu</h1>
+      <nav>
+        <button data-tab="writing" class="active">Writing</button>
+        <button data-tab="reading">Reading</button>
+        <button data-tab="speaking">Speaking</button>
+        <button data-tab="listening">Listening</button>
+        <button data-tab="practice">Practice</button>
+        <button onclick="resetApp()" class="logout-btn">Reset</button>
+      </nav>
+    </header>
 
-  <main id="tabs">
-    <!-- Writing Tab -->
-    <section id="writing" class="tab active">
-      <h2>✍️ Writing Task</h2>
-      <textarea id="writingInput" placeholder="Write your essay here..."></textarea>
-      <button onclick="submitWriting()">Evaluate Writing</button>
-      <div id="writingResults" class="results hidden"></div>
-    </section>
+    <main id="tabs">
+      <!-- Writing Tab -->
+      <section id="writing" class="tab active">
+        <h2>✍️ Writing Assessment</h2>
+        
+        <div class="question-container">
+          <span class="question-type">Task 1 - Academic</span>
+          <div class="time-remaining" id="writingTimer">Time Remaining: 20:00</div>
+          
+          <p><strong>Instructions:</strong> The chart below shows the percentage of households in owned and rented accommodation in England and Wales between 1918 and 2011.</p>
+          <p>Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</p>
+          <p><em>Write at least 150 words.</em></p>
+          
+          <textarea id="writingInput" placeholder="Begin your response here..."></textarea>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <button onclick="submitWriting()">Submit Assessment</button>
+        </div>
+        
+        <div class="question-container">
+          <span class="question-type">Task 2 - Essay</span>
+          <p><strong>Topic:</strong> Some people believe that technology has made our lives more complicated. Others argue that it has made life easier and more convenient. Discuss both views and give your own opinion.</p>
+          <p><em>Write at least 250 words.</em></p>
+          
+          <textarea id="writingTask2" placeholder="Develop your argument here..."></textarea>
+          <button onclick="submitWritingTask2()">Submit Essay</button>
+        </div>
+        
+        <div id="writingResults" class="results hidden"></div>
+      </section>
 
-    <!-- Reading Tab -->
-    <section id="reading" class="tab">
-      <h2>📚 Reading Task</h2>
-      <p id="readingPassage">[Passage will appear here]</p>
-      <button onclick="loadReading()">Load Passage</button>
-      <textarea id="readingAnswer" placeholder="Your summary/response..."></textarea>
-      <button onclick="submitReading()">Evaluate Reading</button>
-      <div id="readingResults" class="results hidden"></div>
-    </section>
+      <!-- Reading Tab -->
+      <section id="reading" class="tab">
+        <h2>📚 Reading Comprehension</h2>
+        
+        <div class="question-container">
+          <span class="question-type">Academic Reading</span>
+          <div class="time-remaining" id="readingTimer">Time Remaining: 60:00</div>
+          
+          <div id="readingPassage">
+            <h3>Passage 1: The Future of Renewable Energy</h3>
+            <p>The transition to renewable energy sources has become one of the most pressing challenges of our time. Solar and wind power technologies have made remarkable advances in efficiency and cost-effectiveness over the past decade. However, the intermittent nature of these energy sources presents significant challenges for grid stability and energy storage.</p>
+            
+            <p>Recent developments in battery technology, particularly lithium-ion batteries, have begun to address these storage challenges. The cost of battery storage has decreased by approximately 70% since 2015, making large-scale energy storage increasingly viable. This improvement has opened new possibilities for renewable energy integration.</p>
+            
+            <p>Despite these advances, critics argue that the complete transition to renewable energy may take several decades due to infrastructure limitations and economic considerations. The International Energy Agency estimates that achieving net-zero emissions by 2050 will require unprecedented global cooperation and investment in clean energy technologies.</p>
+          </div>
+          
+          <button onclick="loadReading()">Load New Passage</button>
+        </div>
+        
+        <div class="question-container">
+          <h3>Questions 1-5: Multiple Choice</h3>
+          <div class="multiple-choice">
+            <p><strong>1. According to the passage, what is the main challenge with solar and wind power?</strong></p>
+            <label class="choice" onclick="selectChoice(this, 'q1', 'a')">
+              <input type="radio" name="q1" value="a" style="display:none">
+              A) High cost of installation
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'q1', 'b')">
+              <input type="radio" name="q1" value="b" style="display:none">
+              B) Intermittent energy production
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'q1', 'c')">
+              <input type="radio" name="q1" value="c" style="display:none">
+              C) Environmental impact
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'q1', 'd')">
+              <input type="radio" name="q1" value="d" style="display:none">
+              D) Technological complexity
+            </label>
+          </div>
+          
+          <h3>Questions 6-8: Short Answer</h3>
+          <p><strong>6. By what percentage has battery storage cost decreased since 2015?</strong></p>
+          <input type="text" id="shortAnswer1" placeholder="Your answer...">
+          
+          <p><strong>7. What year does the International Energy Agency target for net-zero emissions?</strong></p>
+          <input type="text" id="shortAnswer2" placeholder="Your answer...">
+          
+          <h3>Questions 9-10: True/False/Not Given</h3>
+          <p><strong>9. Lithium-ion batteries are the only solution for renewable energy storage.</strong></p>
+          <div class="multiple-choice">
+            <label class="choice" onclick="selectChoice(this, 'q9', 'true')">
+              <input type="radio" name="q9" value="true" style="display:none">
+              True
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'q9', 'false')">
+              <input type="radio" name="q9" value="false" style="display:none">
+              False
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'q9', 'not-given')">
+              <input type="radio" name="q9" value="not-given" style="display:none">
+              Not Given
+            </label>
+          </div>
+          
+          <button onclick="submitReading()">Submit Reading Assessment</button>
+        </div>
+        
+        <div id="readingResults" class="results hidden"></div>
+      </section>
 
-    <!-- Speaking Tab -->
-    <section id="speaking" class="tab">
-      <h2>🎤 Speaking Task</h2>
-      <p id="speakingPrompt">[Prompt will appear here]</p>
-      <video id="videoPreview" autoplay muted></video>
-      <button onclick="startRecording()">Start</button>
-      <button onclick="stopRecording()">Stop</button>
-      <button onclick="submitSpeaking()">Evaluate Speaking</button>
-      <div id="speakingResults" class="results hidden"></div>
-    </section>
+      <!-- Speaking Tab -->
+      <section id="speaking" class="tab">
+        <h2>🎤 Speaking Assessment</h2>
+        
+        <div class="question-container">
+          <span class="question-type">Part 1 - Introduction</span>
+          <div class="time-remaining" id="speakingTimer">Preparation Time: 01:00</div>
+          
+          <p id="speakingPrompt"><strong>Let's talk about your hometown.</strong><br>
+          - Can you describe your hometown?<br>
+          - What do you like most about living there?<br>
+          - How has your hometown changed over the years?</p>
+          
+          <video id="videoPreview" autoplay muted></video>
+          <button onclick="startRecording()">Start Recording</button>
+          <button onclick="stopRecording()" disabled id="stopBtn">Stop Recording</button>
+          <button onclick="submitSpeaking()" disabled id="submitSpeakingBtn">Submit Assessment</button>
+        </div>
+        
+        <div class="question-container">
+          <span class="question-type">Part 2 - Cue Card</span>
+          <p><strong>Describe a memorable journey you have taken.</strong></p>
+          <p>You should say:<br>
+          - Where you went<br>
+          - When you went there<br>
+          - Who you went with<br>
+          - And explain why this journey was memorable</p>
+          <p><em>You have 1 minute to prepare and 2 minutes to speak.</em></p>
+        </div>
+        
+        <div id="speakingResults" class="results hidden"></div>
+      </section>
 
-    <!-- Listening Tab -->
-    <section id="listening" class="tab">
-      <h2>🎧 Listening Task</h2>
-      <audio id="listeningAudio" controls></audio>
-      <button onclick="loadListening()">Load Audio</button>
-      <textarea id="listeningAnswer" placeholder="Write what you heard..."></textarea>
-      <button onclick="submitListening()">Evaluate Listening</button>
-      <div id="listeningResults" class="results hidden"></div>
-    </section>
-  </main>
+      <!-- Listening Tab -->
+      <section id="listening" class="tab">
+        <h2>🎧 Listening Assessment</h2>
+        
+        <div class="question-container">
+          <span class="question-type">Section 1 - Social Context</span>
+          <div class="time-remaining" id="listeningTimer">Time Remaining: 30:00</div>
+          
+          <audio id="listeningAudio" controls>
+            <source src="https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3" type="audio/mpeg">
+          </audio>
+          <button onclick="loadListening()">Load Audio</button>
+          
+          <h3>Questions 1-5: Form Completion</h3>
+          <p>Complete the form below. Write NO MORE THAN TWO WORDS for each answer.</p>
+          
+          <div style="background: var(--cyber-bg); padding: 15px; border-radius: 6px; margin: 15px 0;">
+            <p><strong>Library Membership Application</strong></p>
+            <p>Name: Sarah Johnson</p>
+            <p>Address: 45 __________ Street</p>
+            <p>Phone: __________ </p>
+            <p>Preferred contact method: __________ </p>
+            <p>Type of membership: __________ </p>
+            <p>Special requirements: __________ </p>
+          </div>
+          
+          <input type="text" placeholder="Answer 1" id="listening1">
+          <input type="text" placeholder="Answer 2" id="listening2">
+          <input type="text" placeholder="Answer 3" id="listening3">
+          <input type="text" placeholder="Answer 4" id="listening4">
+          <input type="text" placeholder="Answer 5" id="listening5">
+          
+          <h3>Questions 6-10: Multiple Choice</h3>
+          <div class="multiple-choice">
+            <p><strong>6. What is the main topic of the conversation?</strong></p>
+            <label class="choice" onclick="selectChoice(this, 'l6', 'a')">
+              <input type="radio" name="l6" value="a" style="display:none">
+              A) Booking a hotel room
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'l6', 'b')">
+              <input type="radio" name="l6" value="b" style="display:none">
+              B) Library membership application
+            </label>
+            <label class="choice" onclick="selectChoice(this, 'l6', 'c')">
+              <input type="radio" name="l6" value="c" style="display:none">
+              C) Course registration
+            </label>
+          </div>
+          
+          <button onclick="submitListening()">Submit Listening Assessment</button>
+        </div>
+        
+        <div id="listeningResults" class="results hidden"></div>
+      </section>
+
+      <!-- Practice Tab -->
+      <section id="practice" class="tab">
+        <h2>🎯 Practice Mode</h2>
+        
+        <div class="question-container">
+          <span class="question-type">Quick Practice</span>
+          <p>Choose a skill to practice:</p>
+          
+          <button onclick="startQuickPractice('vocabulary')">Vocabulary Builder</button>
+          <button onclick="startQuickPractice('grammar')">Grammar Focus</button>
+          <button onclick="startQuickPractice('pronunciation')">Pronunciation</button>
+          <button onclick="startQuickPractice('fluency')">Fluency Exercises</button>
+        </div>
+        
+        <div id="practiceContent" class="question-container hidden">
+          <div id="practiceExercise"></div>
+          <div id="practiceResults" class="results hidden"></div>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="api.js"></script>
   <script src="recorder.js"></script>
