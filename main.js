@@ -1,837 +1,822 @@
-// Fixed main.js - Connected to GetEdu Backend API
-let currentAnswers = {};
-let timers = {};
-
-// Tab navigation
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.onclick = () => {
-    if (btn.dataset.tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      document.getElementById(btn.dataset.tab).classList.add('active');
-      btn.classList.add('active');
-      
-      // Initialize timers for different sections
-      initializeTimer(btn.dataset.tab);
-    }
-  };
+// Dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+  initializeNavigation();
+  initializeDashboard();
+  initializeStudentsPage();
+  initializeTeachersPage();
+  initializeClassesPage();
+  initializeParentsPage();
+  initializeAIInsightsPage();
 });
 
-// Timer functionality
-function initializeTimer(section) {
-  if (timers[section]) {
-    clearInterval(timers[section]);
-  }
-  
-  let timeLeft;
-  let timerElement;
-  
-  switch(section) {
-    case 'writing':
-      timeLeft = 20 * 60; // 20 minutes
-      timerElement = document.getElementById('writingTimer');
-      break;
-    case 'reading':
-      timeLeft = 60 * 60; // 60 minutes
-      timerElement = document.getElementById('readingTimer');
-      break;
-    case 'speaking':
-      timeLeft = 1 * 60; // 1 minute prep
-      timerElement = document.getElementById('speakingTimer');
-      break;
-    case 'listening':
-      timeLeft = 30 * 60; // 30 minutes
-      timerElement = document.getElementById('listeningTimer');
-      break;
-    default:
-      return;
-  }
-  
-  timers[section] = setInterval(() => {
-    timeLeft--;
-    if (timeLeft <= 0) {
-      clearInterval(timers[section]);
-      timerElement.textContent = "Time's Up!";
-      timerElement.style.background = 'var(--cyber-error)';
-      showNotification('Time is up for this section!', 'warning');
-      return;
-    }
-    
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timerElement.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }, 1000);
-}
+// Navigation functionality
+function initializeNavigation() {
+  const navLinks = document.querySelectorAll('.nav-link');
+  const pages = document.querySelectorAll('.page');
 
-// Multiple choice selection
-function selectChoice(element, questionName, value) {
-  const group = element.closest('.multiple-choice') || element.parentElement;
-  group.querySelectorAll('.choice').forEach(choice => choice.classList.remove('selected'));
-  
-  element.classList.add('selected');
-  currentAnswers[questionName] = value;
-}
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
 
-// Progress tracking for writing
-function updateProgress() {
-  const writingInput = document.getElementById('writingInput');
-  if (!writingInput) return;
-  
-  const words = writingInput.value.trim().split(/\s+/).filter(word => word.length > 0);
-  const wordCount = words.length;
-  const targetWords = 150;
-  const progress = Math.min((wordCount / targetWords) * 100, 100);
-  
-  const progressFill = document.querySelector('.progress-fill');
-  if (progressFill) {
-    progressFill.style.width = progress + '%';
-  }
-  
-  // Update word count display
-  updateWordCountDisplay('writingInput', wordCount, targetWords);
-}
+      // Remove active class from all links and pages
+      navLinks.forEach(l => l.classList.remove('active'));
+      pages.forEach(p => p.classList.remove('active'));
 
-function updateWordCountDisplay(inputId, currentCount, target) {
-  let countDisplay = document.getElementById(`${inputId}WordCount`);
-  if (!countDisplay) {
-    countDisplay = document.createElement('div');
-    countDisplay.id = `${inputId}WordCount`;
-    countDisplay.style.cssText = 'margin-top: 10px; font-size: 14px; color: var(--cyber-text-muted);';
-    
-    const input = document.getElementById(inputId);
-    if (input && input.parentNode) {
-      input.parentNode.insertBefore(countDisplay, input.nextSibling);
-    }
-  }
-  
-  countDisplay.textContent = `Words: ${currentCount}/${target}`;
-  
-  // Color coding
-  if (currentCount < target * 0.8) {
-    countDisplay.style.color = 'var(--cyber-error)';
-  } else if (currentCount < target) {
-    countDisplay.style.color = 'var(--cyber-warning)';
-  } else {
-    countDisplay.style.color = 'var(--cyber-accent)';
-  }
-}
+      // Add active class to clicked link
+      link.classList.add('active');
 
-// Writing functions connected to backend
-async function submitWriting() {
-  const content = document.getElementById('writingInput').value;
-  if (!content.trim()) {
-    showNotification('Please write something before submitting.', 'error');
-    return;
-  }
-  
-  const wordCount = content.trim().split(/\s+/).length;
-  if (wordCount < 150) {
-    showNotification('Your response should be at least 150 words for Task 1.', 'warning');
-  }
-  
-  try {
-    showLoading('writingResults');
-    
-    // Use quick evaluation from your backend
-    const data = await quickEvaluateEssay(content, 'task1');
-    
-    showEvaluationResults('writingResults', data, 'Writing Task 1');
-    showNotification('Writing evaluation completed!', 'success');
-    
-  } catch (error) {
-    console.error('Error submitting writing:', error);
-    showNotification(`Error: ${error.message}`, 'error');
-    hideLoading('writingResults');
-  }
-}
-
-async function submitWritingTask2() {
-  const content = document.getElementById('writingTask2').value;
-  if (!content.trim()) {
-    showNotification('Please write something before submitting.', 'error');
-    return;
-  }
-  
-  const wordCount = content.trim().split(/\s+/).length;
-  if (wordCount < 250) {
-    showNotification('Your essay should be at least 250 words for Task 2.', 'warning');
-  }
-  
-  try {
-    showLoading('writingResults');
-    
-    // Use your backend's evaluation
-    const data = await quickEvaluateEssay(content, 'task2');
-    
-    showEvaluationResults('writingResults', data, 'Writing Task 2');
-    showNotification('Essay evaluation completed!', 'success');
-    
-    // Clear the draft after successful submission
-    localStorage.removeItem('essayDraft2');
-    
-  } catch (error) {
-    console.error('Error submitting writing task 2:', error);
-    showNotification(`Error: ${error.message}`, 'error');
-    hideLoading('writingResults');
-  }
-}
-
-// Reading functions (mock for now since backend doesn't have this)
-async function loadReading() {
-  try {
-    document.getElementById('readingPassage').innerHTML = generateSamplePassage();
-    showNotification('New passage loaded successfully.', 'success');
-  } catch (error) {
-    console.error('Error loading passage:', error);
-    showNotification('Error loading passage.', 'error');
-  }
-}
-
-function generateSamplePassage() {
-  const passages = [
-    {
-      title: "The Future of Renewable Energy",
-      content: `The transition to renewable energy sources has become one of the most pressing challenges of our time. Solar and wind power technologies have made remarkable advances in efficiency and cost-effectiveness over the past decade. However, the intermittent nature of these energy sources presents significant challenges for grid stability and energy storage.
-
-Recent developments in battery technology, particularly lithium-ion batteries, have begun to address these storage challenges. The cost of battery storage has decreased by approximately 70% since 2015, making large-scale energy storage increasingly viable. This improvement has opened new possibilities for renewable energy integration.
-
-Despite these advances, critics argue that the complete transition to renewable energy may take several decades due to infrastructure limitations and economic considerations. The International Energy Agency estimates that achieving net-zero emissions by 2050 will require unprecedented global cooperation and investment in clean energy technologies.`
-    },
-    {
-      title: "The Impact of Artificial Intelligence on Education",
-      content: `Artificial Intelligence is revolutionizing education by personalizing learning experiences and automating administrative tasks. AI-powered systems can adapt to individual learning styles, providing customized content and pacing that optimizes student outcomes.
-
-Machine learning algorithms analyze student performance data to identify learning gaps and recommend targeted interventions. This data-driven approach enables educators to provide more effective support and helps students achieve better academic results.
-
-However, the integration of AI in education also raises concerns about privacy, data security, and the potential replacement of human teachers. Educational institutions must carefully balance the benefits of AI technology with the need to maintain human connection and critical thinking skills in the learning process.`
-    }
-  ];
-  
-  const randomPassage = passages[Math.floor(Math.random() * passages.length)];
-  
-  return `
-    <h3>Passage: ${randomPassage.title}</h3>
-    ${randomPassage.content.split('\n\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
-  `;
-}
-
-async function submitReading() {
-  const answers = {
-    multiple_choice: currentAnswers,
-    short_answers: {
-      q6: document.getElementById('shortAnswer1')?.value || '',
-      q7: document.getElementById('shortAnswer2')?.value || ''
-    }
-  };
-  
-  const hasAnswers = Object.keys(answers.multiple_choice).length > 0 || 
-                    answers.short_answers.q6 || answers.short_answers.q7;
-  
-  if (!hasAnswers) {
-    showNotification('Please answer at least one question before submitting.', 'error');
-    return;
-  }
-  
-  try {
-    showLoading('readingResults');
-    
-    // Use mock evaluation since backend doesn't have reading endpoint yet
-    const data = await evaluateReading(answers);
-    
-    showEvaluationResults('readingResults', data, 'Reading Comprehension');
-    showNotification('Reading evaluation completed!', 'success');
-    
-  } catch (error) {
-    console.error('Error submitting reading:', error);
-    showNotification(`Error: ${error.message}`, 'error');
-    hideLoading('readingResults');
-  }
-}
-
-// Speaking functions connected to backend
-async function submitSpeaking() {
-  if (!recordedChunks || recordedChunks.length === 0) {
-    showNotification('Please record audio before submitting.', 'error');
-    return;
-  }
-  
-  try {
-    showLoading('speakingResults');
-    
-    // For demo purposes, we'll simulate transcription and use your backend
-    const simulatedTranscription = "I would like to talk about my hometown, which is a medium-sized city located in the central part of my country. What I like most about living there is the perfect balance between urban conveniences and natural beauty. The city has all the modern facilities you would expect, like shopping centers, restaurants, and good public transportation, but it's also surrounded by beautiful parks and green spaces. Over the years, my hometown has changed quite significantly. There has been a lot of development, with new residential areas being built and the city center being modernized. However, the local government has done a good job of preserving the historical areas and maintaining the city's character.";
-    
-    const speakingDuration = recordedChunks.length * 2; // Rough estimate
-    
-    // Use your backend's speaking evaluation
-    const data = await evaluateSpeaking(simulatedTranscription, speakingDuration);
-    
-    showEvaluationResults('speakingResults', data, 'Speaking Assessment');
-    showNotification('Speaking evaluation completed!', 'success');
-    
-  } catch (error) {
-    console.error('Error submitting speaking:', error);
-    showNotification(`Error: ${error.message}`, 'error');
-    hideLoading('speakingResults');
-  }
-}
-
-// Listening functions (mock for now)
-async function loadListening() {
-  try {
-    // Mock loading audio
-    showNotification('Audio loaded successfully (demo mode).', 'success');
-  } catch (error) {
-    console.error('Error loading listening audio:', error);
-    showNotification('Error loading audio.', 'error');
-  }
-}
-
-async function submitListening() {
-  const answers = {
-    form_completion: [
-      document.getElementById('listening1')?.value || '',
-      document.getElementById('listening2')?.value || '',
-      document.getElementById('listening3')?.value || '',
-      document.getElementById('listening4')?.value || '',
-      document.getElementById('listening5')?.value || ''
-    ],
-    multiple_choice: currentAnswers
-  };
-  
-  const hasAnswers = answers.form_completion.some(ans => ans.trim()) || 
-                    Object.keys(answers.multiple_choice).length > 0;
-  
-  if (!hasAnswers) {
-    showNotification('Please provide at least one answer before submitting.', 'error');
-    return;
-  }
-  
-  try {
-    showLoading('listeningResults');
-    
-    // Use mock evaluation
-    const data = await evaluateListening(answers);
-    
-    showEvaluationResults('listeningResults', data, 'Listening Assessment');
-    showNotification('Listening evaluation completed!', 'success');
-    
-  } catch (error) {
-    console.error('Error submitting listening:', error);
-    showNotification(`Error: ${error.message}`, 'error');
-    hideLoading('listeningResults');
-  }
-}
-
-// Practice functions
-function startQuickPractice(type) {
-  const practiceContent = document.getElementById('practiceContent');
-  const practiceExercise = document.getElementById('practiceExercise');
-  
-  practiceContent.classList.remove('hidden');
-  
-  switch(type) {
-    case 'vocabulary':
-      practiceExercise.innerHTML = generateVocabularyExercise();
-      break;
-    case 'grammar':
-      practiceExercise.innerHTML = generateGrammarExercise();
-      break;
-    case 'pronunciation':
-      practiceExercise.innerHTML = generatePronunciationExercise();
-      break;
-    case 'fluency':
-      practiceExercise.innerHTML = generateFluencyExercise();
-      break;
-  }
-}
-
-function generateVocabularyExercise() {
-  return `
-    <span class="question-type">Vocabulary Builder</span>
-    <h3>Word Families</h3>
-    <p>Complete the sentences with the correct form of the word in brackets:</p>
-    
-    <p>1. The _______ (CREATE) of new technologies has revolutionized communication.</p>
-    <input type="text" placeholder="Your answer" id="vocab1">
-    
-    <p>2. She spoke _______ (CONFIDENCE) about her research findings.</p>
-    <input type="text" placeholder="Your answer" id="vocab2">
-    
-    <p>3. The _______ (SUSTAIN) of our environment is crucial for future generations.</p>
-    <input type="text" placeholder="Your answer" id="vocab3">
-    
-    <button onclick="checkVocabularyAnswers()">Check Answers</button>
-  `;
-}
-
-function generateGrammarExercise() {
-  return `
-    <span class="question-type">Grammar Focus</span>
-    <h3>Conditional Sentences</h3>
-    <p>Choose the correct option to complete each sentence:</p>
-    
-    <div class="multiple-choice">
-      <p>1. If I _______ more time, I would learn a new language.</p>
-      <label class="choice" onclick="selectChoice(this, 'g1', 'a')">A) have</label>
-      <label class="choice" onclick="selectChoice(this, 'g1', 'b')">B) had</label>
-      <label class="choice" onclick="selectChoice(this, 'g1', 'c')">C) would have</label>
-    </div>
-    
-    <button onclick="checkGrammarAnswers()">Check Answers</button>
-  `;
-}
-
-function generatePronunciationExercise() {
-  return `
-    <span class="question-type">Pronunciation Practice</span>
-    <h3>Word Stress Patterns</h3>
-    <p>Record yourself saying these words and focus on the stressed syllables:</p>
-    
-    <div style="background: var(--cyber-bg); padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p><strong>PHO-to-graph</strong> (stress on first syllable)</p>
-      <p><strong>pho-TOG-ra-phy</strong> (stress on second syllable)</p>
-      <p><strong>pho-to-GRAPH-ic</strong> (stress on third syllable)</p>
-    </div>
-    
-    <button onclick="startPronunciationRecording()">Start Recording</button>
-  `;
-}
-
-function generateFluencyExercise() {
-  return `
-    <span class="question-type">Fluency Practice</span>
-    <h3>One-Minute Speaking</h3>
-    <p>Speak about this topic for one minute without stopping:</p>
-    
-    <div style="background: var(--cyber-bg); padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p><strong>"Describe your ideal vacation destination and explain why you would like to visit there."</strong></p>
-    </div>
-    
-    <div class="time-remaining" id="fluencyTimer">Preparation Time: 00:30</div>
-    <button onclick="startFluencyPractice()">Start Timer</button>
-  `;
-}
-
-// Answer checking functions
-function checkVocabularyAnswers() {
-  const answers = {
-    vocab1: 'creation',
-    vocab2: 'confidently', 
-    vocab3: 'sustainability'
-  };
-  
-  let correct = 0;
-  Object.entries(answers).forEach(([id, correctAnswer]) => {
-    const input = document.getElementById(id);
-    const userAnswer = input.value.trim().toLowerCase();
-    
-    if (userAnswer === correctAnswer.toLowerCase()) {
-      input.style.borderColor = 'var(--cyber-accent)';
-      correct++;
-    } else {
-      input.style.borderColor = 'var(--cyber-error)';
-    }
-  });
-  
-  showNotification(`You got ${correct} out of 3 correct!`, correct === 3 ? 'success' : 'warning');
-}
-
-function checkGrammarAnswers() {
-  const correctAnswers = { g1: 'b' };
-  let correct = 0;
-  
-  Object.entries(correctAnswers).forEach(([question, correctAnswer]) => {
-    if (currentAnswers[question] === correctAnswer) {
-      correct++;
-    }
-  });
-  
-  showNotification(`Grammar check: ${correct} out of 1 correct!`, correct === 1 ? 'success' : 'warning');
-}
-
-// UI Helper functions
-function showEvaluationResults(elId, data, skillType) {
-  const box = document.getElementById(elId);
-  
-  let html = `<h3>${skillType} Evaluation Results</h3>`;
-  
-  // Handle your backend's response format
-  if (data.scores) {
-    html += '<div class="score-grid">';
-    
-    Object.entries(data.scores).forEach(([criterion, score]) => {
-      const formattedCriterion = criterion.replace(/_/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase());
-      html += `
-        <div class="score-item">
-          <span class="criterion">${formattedCriterion}:</span>
-          <span class="score">${score}</span>
-          <div class="score-bar">
-            <div class="score-fill" style="width: ${(score / 9) * 100}%"></div>
-          </div>
-        </div>
-      `;
+      // Show corresponding page
+      const pageId = link.dataset.page;
+      document.getElementById(pageId).classList.add('active');
     });
-    html += '</div>';
-  }
-  
-  // Add overall band score with special styling
-  if (data.scores && data.scores.overall_band) {
-    html += `
-      <div class="overall-score">
-        <h4>Overall Band Score</h4>
-        <div class="big-score">${data.scores.overall_band}</div>
+  });
+}
+
+// Dashboard overview initialization
+function initializeDashboard() {
+  createPerformanceChart();
+  createAttendanceChart();
+  createOverallPerformanceChart();
+}
+
+// Chart creation functions
+function createPerformanceChart() {
+  const ctx = document.getElementById('performanceChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: window.dashboardData.performanceData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: {
+              size: 12,
+              family: 'Inter'
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function createAttendanceChart() {
+  const ctx = document.getElementById('attendanceChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [{
+        label: 'Attendance Rate (%)',
+        data: [88, 92, 89, 94, 91, 89.5],
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: 80,
+          max: 100,
+          ticks: {
+            callback: function(value) {
+              return value + '%';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function createOverallPerformanceChart() {
+  const ctx = document.getElementById('overallPerformanceChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['A2', 'B1', 'B2', 'C1', 'C2'],
+      datasets: [{
+        label: 'Average Score',
+        data: [5.2, 6.1, 7.0, 8.1, 8.8],
+        backgroundColor: '#10B981',
+        borderColor: '#059669',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 9,
+          ticks: {
+            callback: function(value) {
+              return value + '/9';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Students page initialization
+function initializeStudentsPage() {
+  renderStudentsGrid();
+  initializeStudentModal();
+}
+
+function renderStudentsGrid() {
+  const grid = document.getElementById('studentsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = window.dashboardData.students.map(student => `
+    <div class="student-card" onclick="showStudentDetails(${student.id})">
+      <div class="student-header">
+        <div>
+          <div class="student-name">${student.name}</div>
+          <div class="student-group">${student.group}</div>
+        </div>
+        <div class="attendance-badge">${student.attendance}%</div>
       </div>
-    `;
-  }
-  
-  // Add evaluation feedback
-  if (data.evaluation) {
-    const eval = data.evaluation;
-    
-    if (eval.strengths && eval.strengths.length > 0) {
-      html += `
-        <div class="feedback-section strengths">
-          <h4>✅ Strengths</h4>
-          <ul>
-            ${eval.strengths.map(strength => `<li>${strength}</li>`).join('')}
-          </ul>
+
+      <div class="performance-overview">
+        <div class="skill-item">
+          <span class="skill-name">Speaking</span>
+          <span class="skill-score">${student.performance.speaking}</span>
         </div>
-      `;
-    }
-    
-    if (eval.weaknesses && eval.weaknesses.length > 0) {
-      html += `
-        <div class="feedback-section weaknesses">
-          <h4>⚠️ Areas for Improvement</h4>
-          <ul>
-            ${eval.weaknesses.map(weakness => `<li>${weakness}</li>`).join('')}
-          </ul>
+        <div class="skill-item">
+          <span class="skill-name">Listening</span>
+          <span class="skill-score">${student.performance.listening}</span>
         </div>
-      `;
-    }
-    
-    if (eval.focus_areas && eval.focus_areas.length > 0) {
-      html += `
-        <div class="feedback-section focus">
-          <h4>🎯 Focus Areas</h4>
-          <div class="focus-tags">
-            ${eval.focus_areas.map(area => `<span class="focus-tag">${area.replace(/_/g, ' ')}</span>`).join('')}
+        <div class="skill-item">
+          <span class="skill-name">Reading</span>
+          <span class="skill-score">${student.performance.reading}</span>
+        </div>
+        <div class="skill-item">
+          <span class="skill-name">Writing</span>
+          <span class="skill-score">${student.performance.writing}</span>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <h4>Current Goals</h4>
+        ${student.goals.slice(0, 2).map(goal => `
+          <div class="progress-item">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${goal.progress}%"></div>
+            </div>
+            <span class="progress-text">${goal.progress}%</span>
           </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function showStudentDetails(studentId) {
+  const student = window.dashboardData.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  const modal = document.getElementById('studentModal');
+  const details = document.getElementById('studentDetails');
+
+  details.innerHTML = `
+    <h2>${student.name}</h2>
+    <p><strong>Group:</strong> ${student.group}</p>
+    <p><strong>Attendance:</strong> ${student.attendance}%</p>
+
+    <div class="radar-container">
+      <canvas id="studentRadar"></canvas>
+    </div>
+
+    <div class="skills-legend">
+      ${Object.entries(student.performance).map(([skill, score]) => `
+        <div class="legend-item">
+          <span class="legend-skill">${skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+          <span class="legend-score">${score}</span>
         </div>
-      `;
+      `).join('')}
+    </div>
+
+    <h3>AI Feedback</h3>
+    <ul>
+      ${student.aiFeedback.map(feedback => `<li>${feedback}</li>`).join('')}
+    </ul>
+
+    <h3>Goals & Progress</h3>
+    ${student.goals.map(goal => `
+      <div class="progress-item" style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span>${goal.goal}</span>
+          <span>${goal.progress}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${goal.progress}%"></div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  modal.style.display = 'block';
+
+  // Create radar chart
+  setTimeout(() => {
+    createStudentRadarChart(student);
+  }, 100);
+}
+
+function createStudentRadarChart(student) {
+  const ctx = document.getElementById('studentRadar');
+  if (!ctx) return;
+
+  const skills = ['Speaking', 'Listening', 'Reading', 'Writing'];
+  const scores = [
+    student.performance.speaking,
+    student.performance.listening,
+    student.performance.reading,
+    student.performance.writing
+  ];
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: skills,
+      datasets: [{
+        label: student.name,
+        data: scores,
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        pointBackgroundColor: '#10B981',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#10B981'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 9,
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+function createTeacherAttributeCharts(teacher) {
+  createGeneralEnglishChart(teacher);
+  createIELTSSkillsChart(teacher);
+}
+
+function createGeneralEnglishChart(teacher) {
+  const ctx = document.getElementById('generalEnglishChart');
+  if (!ctx) return;
+
+  const teacherAttributes = window.dashboardData.teacherAttributes[teacher.id] || {};
+  const generalSkills = teacherAttributes.generalEnglish || {
+    vocabulary: 8.5,
+    grammar: 9.0,
+    pronunciation: 7.5,
+    conversation: 8.0,
+    writing: 7.0
+  };
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Vocabulary', 'Grammar', 'Pronunciation', 'Conversation', 'Writing'],
+      datasets: [{
+        label: 'Teaching Strength',
+        data: [
+          generalSkills.vocabulary,
+          generalSkills.grammar,
+          generalSkills.pronunciation,
+          generalSkills.conversation,
+          generalSkills.writing
+        ],
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        pointBackgroundColor: '#10B981',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#10B981'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 10,
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+function createIELTSSkillsChart(teacher) {
+  const ctx = document.getElementById('ieltsSkillsChart');
+  if (!ctx) return;
+
+  const teacherAttributes = window.dashboardData.teacherAttributes[teacher.id] || {};
+  const ieltsSkills = teacherAttributes.ieltsSkills || {
+    listening: 8.0,
+    reading: 8.5,
+    writing: 7.5,
+    speaking: 9.0
+  };
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Listening', 'Reading', 'Writing', 'Speaking'],
+      datasets: [{
+        label: 'IELTS Teaching Expertise',
+        data: [
+          ieltsSkills.listening,
+          ieltsSkills.reading,
+          ieltsSkills.writing,
+          ieltsSkills.speaking
+        ],
+        borderColor: '#4F46E5',
+        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+        pointBackgroundColor: '#4F46E5',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#4F46E5'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 10,
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+function initializeStudentModal() {
+  const modal = document.getElementById('studentModal');
+  const span = document.getElementsByClassName('close')[0];
+
+  span.onclick = function() {
+    modal.style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
     }
   }
-  
-  // Add improvement course
-  if (data.improvement_course) {
-    const course = data.improvement_course;
-    html += `
-      <div class="course-section">
-        <h4>📚 ${course.title}</h4>
-        <div class="course-info">
-          <p><strong>Current Level:</strong> ${course.current_level}</p>
-          <p><strong>Target Level:</strong> ${course.target_level}</p>
-          <p><strong>Duration:</strong> ${course.estimated_duration}</p>
+}
+
+// Teachers page initialization
+function initializeTeachersPage() {
+  renderTeachersGrid();
+}
+
+function renderTeachersGrid() {
+  const grid = document.getElementById('teachersGrid');
+  if (!grid) return;
+
+  grid.innerHTML = window.dashboardData.teachers.map(teacher => `
+    <div class="teacher-card" onclick="showTeacherDetails(${teacher.id})">
+      <div class="teacher-header">
+        <div class="teacher-avatar">${teacher.avatar}</div>
+        <h3>${teacher.name}</h3>
+        <p>${teacher.classes.join(', ')}</p>
+      </div>
+
+      <div class="teacher-stats">
+        <div class="teacher-stat">
+          <div class="stat-value">${teacher.lessonsThisMonth}</div>
+          <div class="stat-label">Lessons</div>
         </div>
-    `;
+        <div class="teacher-stat">
+          <div class="stat-value">${teacher.avgStudentImprovement}</div>
+          <div class="stat-label">Avg Score</div>
+        </div>
+        <div class="teacher-stat">
+          <div class="stat-value">${teacher.satisfactionRate}%</div>
+          <div class="stat-label">Satisfaction</div>
+        </div>
+      </div>
+
+      <div class="ai-suggestions">
+        <h4>AI Suggestions</h4>
+        ${teacher.aiSuggestions.map(suggestion => `
+          <div class="suggestion-item">${suggestion}</div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Classes page initialization
+function initializeClassesPage() {
+  renderClassesGrid();
+}
+
+function renderClassesGrid() {
+  const grid = document.getElementById('classesGrid');
+  if (!grid) return;
+
+  grid.innerHTML = window.dashboardData.classes.map(classItem => `
+    <div class="class-card">
+      <div class="class-header">
+        <div class="class-name">${classItem.name}</div>
+        <div class="class-teacher">Teacher: ${classItem.teacher}</div>
+        <div class="class-teacher">${classItem.schedule}</div>
+      </div>
+
+      <div class="class-stats">
+        <div class="teacher-stat">
+          <div class="stat-value">${classItem.studentsCount}</div>
+          <div class="stat-label">Students</div>
+        </div>
+        <div class="teacher-stat">
+          <div class="stat-value">${classItem.avgAttendance}%</div>
+          <div class="stat-label">Attendance</div>
+        </div>
+      </div>
+
+      <div class="performance-overview">
+        ${Object.entries(classItem.skillsAverage).map(([skill, score]) => `
+          <div class="skill-item">
+            <span class="skill-name">${skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+            <span class="skill-score">${score}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="heatmap">
+        <h4>Performance Heatmap</h4>
+        <div class="heatmap-grid">
+          ${Object.entries(classItem.performanceHeatmap).map(([week, level]) => `
+            <div class="heatmap-cell ${level}">W${week.slice(-1)}</div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Teacher details functionality
+function showTeacherDetails(teacherId) {
+  const teacher = window.dashboardData.teachers.find(t => t.id === teacherId);
+  if (!teacher) return;
+
+  const modal = document.getElementById('teacherModal');
+  const details = document.getElementById('teacherDetails');
+
+  // Get students for this teacher
+  const teacherStudents = window.dashboardData.students.filter(student => 
+    teacher.classes.includes(student.group)
+  );
+
+  details.innerHTML = `
+    <div class="teacher-detail-header">
+      <div class="teacher-detail-avatar">${teacher.avatar}</div>
+      <div class="teacher-detail-info">
+        <h2>${teacher.name}</h2>
+        <p>${teacher.classes.join(', ')}</p>
+        <p>${teacher.studentsCount} students | ${teacher.avgStudentImprovement} avg score</p>
+      </div>
+    </div>
+
+    <div class="teacher-attributes-section">
+      <h3>Teaching Strengths & Attributes</h3>
+      <div class="attributes-charts">
+        <div class="attribute-chart-container">
+          <h4>General English Skills</h4>
+          <canvas id="generalEnglishChart"></canvas>
+        </div>
+        <div class="attribute-chart-container">
+          <h4>IELTS Skills</h4>
+          <canvas id="ieltsSkillsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <h3>Student Performance</h3>
+    <div class="teacher-students-grid">
+      ${teacherStudents.map(student => `
+        <div class="teacher-student-card" onclick="showStudentPieChart('${student.name}', ${JSON.stringify(student.performance).replace(/"/g, '&quot;')})">
+          <div class="teacher-student-name">${student.name}</div>
+          <div class="teacher-student-score">Overall: ${((student.performance.speaking + student.performance.listening + student.performance.reading + student.performance.writing) / 4).toFixed(1)}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <h3>Teaching Calendar</h3>
+    <div class="teacher-calendar">
+      <div class="calendar-header">
+        <h4>January 2024</h4>
+        <div class="calendar-nav">
+          <button onclick="previousMonth()">‹</button>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <span class="legend-color had-lesson"></span>
+          <span>Lesson Completed</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color missed-lesson"></span>
+          <span>Lesson Missed</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color upcoming-lesson"></span>
+          <span>Upcoming Lesson</span>
+        </div>
+      </div>
+      <div class="calendar-grid" id="teacherCalendarGrid">
+        ${generateEnhancedCalendarDays(teacherId)}
+      </div>
+    </div>
+  `;
+
+  modal.style.display = 'block';
+
+  // Create teacher attribute charts after modal is shown
+  setTimeout(() => {
+    createTeacherAttributeCharts(teacher);
+  }, 100);
+}
+
+function generateEnhancedCalendarDays(teacherId) {
+  const calendar = window.dashboardData.enhancedTeacherCalendar[teacherId] || {};
+  const days = [];
+  const today = new Date();
+  const currentDay = today.getDate();
+  
+  // Generate days for January 2024 (simplified)
+  for (let day = 1; day <= 31; day++) {
+    const dateKey = `2024-01-${day.toString().padStart(2, '0')}`;
+    const dayData = calendar[dateKey];
     
-    if (course.weekly_plan && course.weekly_plan.length > 0) {
-      html += '<div class="weekly-plan">';
-      course.weekly_plan.slice(0, 3).forEach(week => {
-        html += `
-          <div class="week-card">
-            <strong>Week ${week.week}: ${week.focus}</strong>
-            ${week.activities ? `<p>${Array.isArray(week.activities) ? week.activities.join(', ') : week.activities}</p>` : ''}
+    let dayClass = 'enhanced-calendar-day';
+    let tooltip = '';
+    
+    if (dayData) {
+      if (day < currentDay) {
+        // Past days
+        if (dayData.lessonStatus === 'completed') {
+          dayClass += ' had-lesson';
+          tooltip = `
+            <div class="enhanced-tooltip">
+              <div class="tooltip-header">Lesson Completed</div>
+              <div class="tooltip-content">
+                <strong>Group:</strong> ${dayData.group}<br>
+                <strong>Topic:</strong> ${dayData.topic}<br>
+                <strong>Duration:</strong> ${dayData.duration}<br>
+                <strong>Students Present:</strong> ${dayData.studentsPresent}/${dayData.totalStudents}
+              </div>
+            </div>
+          `;
+        } else {
+          dayClass += ' missed-lesson';
+          tooltip = `
+            <div class="enhanced-tooltip">
+              <div class="tooltip-header">Lesson Missed</div>
+              <div class="tooltip-content">
+                <strong>Scheduled Group:</strong> ${dayData.group}<br>
+                <strong>Reason:</strong> ${dayData.reason || 'Not specified'}
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        // Future days
+        dayClass += ' upcoming-lesson';
+        tooltip = `
+          <div class="enhanced-tooltip">
+            <div class="tooltip-header">Upcoming Lesson</div>
+            <div class="tooltip-content">
+              <strong>Group:</strong> ${dayData.group}<br>
+              <strong>Topic:</strong> ${dayData.topic}<br>
+              <strong>Time:</strong> ${dayData.time}<br>
+              <strong>Duration:</strong> ${dayData.duration}
+            </div>
           </div>
         `;
-      });
-      html += '</div>';
+      }
     }
     
-    if (course.daily_activities && course.daily_activities.length > 0) {
-      html += `
-        <div class="daily-activities">
-          <h5>Daily Practice:</h5>
-          <ul>
-            ${course.daily_activities.map(activity => `<li>${activity}</li>`).join('')}
-          </ul>
-        </div>
-      `;
+    if (day === currentDay) {
+      dayClass += ' today';
     }
     
-    html += '</div>';
+    days.push(`
+      <div class="${dayClass}" data-tooltip='${tooltip}'>
+        ${day}
+      </div>
+    `);
   }
   
-  box.innerHTML = html;
-  box.classList.remove('hidden');
-  
-  // Scroll to results
-  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return days.join('');
 }
 
-function showNotification(message, type = 'info') {
-  // Remove existing notifications
-  const existing = document.querySelector('.notification');
-  if (existing) existing.remove();
-  
-  const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    border-radius: 12px;
-    color: white;
-    font-weight: 500;
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-    max-width: 350px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  `;
-  
-  switch(type) {
-    case 'success':
-      notification.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
-      break;
-    case 'error':
-      notification.style.background = 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)';
-      break;
-    case 'warning':
-      notification.style.background = 'linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)';
-      break;
-    default:
-      notification.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-  }
-  
-  notification.textContent = message;
-  document.body.appendChild(notification);
-  
-  // Auto remove after 4 seconds
-  setTimeout(() => {
-    if (notification.parentNode) {
-      notification.style.animation = 'slideOut 0.3s ease';
-      setTimeout(() => notification.remove(), 300);
-    }
-  }, 4000);
+function showStudentPieChart(studentName, performance) {
+  alert(`${studentName}'s Performance:\n\nSpeaking: ${performance.speaking}\nListening: ${performance.listening}\nReading: ${performance.reading}\nWriting: ${performance.writing}`);
 }
 
-function showLoading(resultId) {
-  const element = document.getElementById(resultId);
-  element.innerHTML = `
-    <div class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Processing your submission...</p>
-      <p class="loading-tip">This may take a few seconds</p>
+function closeTeacherModal() {
+  document.getElementById('teacherModal').style.display = 'none';
+}
+
+function previousMonth() {
+  // Implementation for previous month navigation
+  console.log('Previous month clicked');
+}
+
+function nextMonth() {
+  // Implementation for next month navigation  
+  console.log('Next month clicked');
+}
+
+// Parents page initialization
+function initializeParentsPage() {
+  renderWhatsAppChats();
+  renderParentsGrid();
+}
+
+function renderWhatsAppChats() {
+  const chatList = document.getElementById('chatList');
+  if (!chatList) return;
+
+  chatList.innerHTML = window.dashboardData.whatsappChats.map(chat => `
+    <div class="chat-item" onclick="openWhatsAppChat('${chat.parentName}')">
+      <div class="chat-avatar">${chat.avatar}</div>
+      <div class="chat-content">
+        <div class="chat-name">${chat.parentName}</div>
+        <div class="chat-preview">${chat.lastMessage}</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+        <div class="chat-time">${chat.time}</div>
+        ${chat.unread > 0 ? `<div class="chat-unread">${chat.unread}</div>` : ''}
+      </div>
     </div>
-  `;
-  element.classList.remove('hidden');
+  `).join('');
 }
 
-function hideLoading(resultId) {
-  const element = document.getElementById(resultId);
-  element.classList.add('hidden');
+function renderParentsGrid() {
+  const grid = document.getElementById('parentsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = window.dashboardData.parents.map(parent => `
+    <div class="parent-card" onclick="openWhatsAppChat('${parent.name}')">
+      <div class="parent-header">
+        <div class="parent-avatar">${parent.name.split(' ').map(n => n[0]).join('')}</div>
+        <div class="parent-info">
+          <h3>${parent.name}</h3>
+          <p>Parent of ${parent.children.join(', ')}</p>
+        </div>
+      </div>
+      
+      <div class="parent-stats">
+        <div class="parent-stat">
+          <div class="parent-stat-value">${parent.totalMessages}</div>
+          <div class="parent-stat-label">Messages</div>
+        </div>
+        <div class="parent-stat">
+          <div class="parent-stat-value">${parent.responseRate}</div>
+          <div class="parent-stat-label">Response Rate</div>
+        </div>
+      </div>
+      
+      <button class="whatsapp-button" onclick="event.stopPropagation(); openWhatsAppChat('${parent.name}')">
+        <span>📱</span>
+        Open WhatsApp Chat
+      </button>
+    </div>
+  `).join('');
 }
 
-// Enhanced event listeners
-document.addEventListener('DOMContentLoaded', () => {
-  // Set up progress tracking for writing inputs
-  const writingInput = document.getElementById('writingInput');
-  if (writingInput) {
-    writingInput.addEventListener('input', updateProgress);
+function openWhatsAppChat(parentName) {
+  const parent = window.dashboardData.parents.find(p => p.name === parentName);
+  if (parent && parent.phone) {
+    const message = encodeURIComponent(`Hello ${parentName}, this is regarding your child's progress.`);
+    window.open(`https://wa.me/${parent.phone.replace(/[^0-9]/g, '')}?text=${message}`, '_blank');
   }
-  
-  const writingTask2 = document.getElementById('writingTask2');
-  if (writingTask2) {
-    writingTask2.addEventListener('input', () => {
-      const wordCount = writingTask2.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-      updateWordCountDisplay('writingTask2', wordCount, 250);
-    });
-  }
-  
-  // Initialize first timer
-  initializeTimer('writing');
-  
-  // Check if user is logged in
-  if (authToken) {
-    showNotification('Welcome back to GetEdu!', 'success');
-  } else {
-    showNotification('Welcome to GetEdu! Some features require login.', 'info');
-  }
+}
+
+// AI Insights page initialization
+function initializeAIInsightsPage() {
+  // AI insights are already in the HTML structure
+  // This function can be used for any dynamic updates
+}
+
+// Search functionality
+function filterStudents() {
+  const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+  const studentCards = document.querySelectorAll('.student-card');
+
+  studentCards.forEach(card => {
+    const studentName = card.querySelector('.student-name').textContent.toLowerCase();
+    const studentGroup = card.querySelector('.student-group').textContent.toLowerCase();
+
+    if (studentName.includes(searchTerm) || studentGroup.includes(searchTerm)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// Utility functions
+function formatScore(score) {
+  return typeof score === 'number' ? score.toFixed(1) : score;
+}
+
+function getScoreColor(score) {
+  if (score >= 7) return 'var(--success)';
+  if (score >= 5.5) return 'var(--warning)';
+  return 'var(--error)';
+}
+
+// Add enhanced tooltip functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle enhanced calendar tooltips
+  document.addEventListener('mouseover', function(e) {
+    if (e.target.classList.contains('enhanced-calendar-day') && e.target.dataset.tooltip) {
+      const tooltip = e.target.dataset.tooltip;
+      if (tooltip && tooltip !== '') {
+        const tooltipDiv = document.createElement('div');
+        tooltipDiv.innerHTML = tooltip;
+        tooltipDiv.className = 'enhanced-tooltip';
+        e.target.appendChild(tooltipDiv);
+      }
+    }
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.classList.contains('enhanced-calendar-day')) {
+      const tooltip = e.target.querySelector('.enhanced-tooltip');
+      if (tooltip) {
+        tooltip.remove();
+      }
+    }
+  });
 });
 
-// Add required CSS for new components
-const additionalStyles = document.createElement('style');
-additionalStyles.textContent = `
-  .score-grid {
-    display: grid;
-    gap: 15px;
-    margin: 20px 0;
-  }
-  
-  .score-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border-left: 4px solid var(--cyber-accent);
-  }
-  
-  .score-bar {
-    width: 100px;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-left: 10px;
-  }
-  
-  .score-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--cyber-accent), var(--cyber-accent-light));
-    transition: width 0.5s ease;
-  }
-  
-  .overall-score {
-    text-align: center;
-    margin: 30px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, var(--cyber-accent), var(--cyber-accent-light));
-    border-radius: 16px;
-    color: white;
-  }
-  
-  .big-score {
-    font-size: 3rem;
-    font-weight: bold;
-    margin-top: 10px;
-  }
-  
-  .feedback-section {
-    margin: 20px 0;
-    padding: 15px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  .feedback-section.strengths {
-    border-left: 4px solid #4facfe;
-  }
-  
-  .feedback-section.weaknesses {
-    border-left: 4px solid #ff416c;
-  }
-  
-  .feedback-section.focus {
-    border-left: 4px solid #ffa726;
-  }
-  
-  .focus-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  
-  .focus-tag {
-    background: var(--cyber-accent);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    text-transform: capitalize;
-  }
-  
-  .course-section {
-    margin: 30px 0;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .course-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin: 15px 0;
-  }
-  
-  .weekly-plan {
-    display: grid;
-    gap: 12px;
-    margin: 20px 0;
-  }
-  
-  .week-card {
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border-left: 3px solid var(--cyber-accent);
-  }
-  
-  .daily-activities {
-    margin-top: 20px;
-  }
-  
-  .daily-activities ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .daily-activities li {
-    padding: 8px 0;
-    padding-left: 20px;
-    position: relative;
-  }
-  
-  .daily-activities li::before {
-    content: "•";
-    color: var(--cyber-accent);
-    font-weight: bold;
-    position: absolute;
-    left: 0;
-  }
-  
-  .loading-container {
-    text-align: center;
-    padding: 40px 20px;
-  }
-  
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid var(--cyber-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
-  }
-  
-  .loading-tip {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
-    margin-top: 10px;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-  }
-`;
-
-document.head.appendChild(additionalStyles);
+// Initialize everything when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeNavigation);
+} else {
+  initializeNavigation();
+}
